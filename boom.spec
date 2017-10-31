@@ -3,19 +3,25 @@
 %else
 %global py2_pkgname python2-boom
 %global with_python3 1
+%global sphinx_docs 1
 %endif
 
 %global summary A set of libraries and tools for managing boot loader entries
 
-Name: boom
-Version: 0.8
-Release: 1%{?dist}
+%global commit 8d23c42902dc3f3d48f981797814c4dcf4a0f273
+%global shortcommit %(c=%{commit}; echo ${c:0:7})
+
+Name: boom	
+Version: 0.8.1
+Release: 0.1.20171201git%{shortcommit}%{?dist}
 Summary: %{summary}
 
 Group: Applications/System
 License: GPLv2
 URL: https://github.com/bmr-cymru/boom	
-Source0: boom-%{version}.tar.gz
+#Source0: boom-%%{version}.tar.gz
+#Source0: https://github.com/csonto/boom/archive/v%%{version}.tar.gz
+Source0: https://github.com/csonto/boom/archive/%{commit}/%{name}-%{shortcommit}.tar.gz
 
 BuildArch: noarch
 
@@ -73,7 +79,8 @@ This package provides the python3 version of boom.
 
 %endif # if with_python3
 %prep
-%autosetup -n boom-%{version}
+#%%autosetup -n boom-%%{version}
+%autosetup -n boom-%{commit}
 
 %build
 %py2_build
@@ -86,6 +93,7 @@ This package provides the python3 version of boom.
 # Install Python3 first, so that the py2 build of usr/bin/boom is not
 # overwritten by the py3 version of the script.
 %if 0%{?with_python3}
+# NOTE: This will not build and install doc on el7
 %py3_install
 make -C doc html BUILDDIR=../doc
 %endif # if with_python3
@@ -144,6 +152,9 @@ install -m 644 man/man8/boom.8 ${RPM_BUILD_ROOT}/%{_mandir}/man8
 %endif # if with_python3
 
 %changelog
+* Fri Dec 01 2017 Marian Csontos <mcsontos@redhat.com> 0.8.1-0.1.20171201git8d23c429
+- Test upstream packaging
+
 * Tue Oct 31 2017 Bryn M. Reeves <bmr@redhat.com> = 0.8-1
 - Merge spec file changes from mcsontos
 - Add boom.8 manual page
