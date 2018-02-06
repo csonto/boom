@@ -1,36 +1,38 @@
-%if 0%{?rhel}
-%global py2_pkgname python-boom
-%else
-%global py2_pkgname python2-boom
+%global with_python2 1
 %global with_python3 1
+%ifnarch s390x s390
+%global with_grub2 1
+%else
+%global with_grub2 0
 %endif
+%global boolean_dependencies 1
 
 %global summary A set of libraries and tools for managing boot loader entries
 
+# TODO: There is a dead boom package in Fedora (up to 25), we may need:
+# - another name for top level package (boom-boot suggested)
+# - add Conflict:
 Name: boom
-Version: 0.8
+Version: 0.8.2.fedora.1
 Release: 1%{?dist}
 Summary: %{summary}
 
-Group: Applications/System
 License: GPLv2
-URL: https://github.com/bmr-cymru/boom	
-Source0: boom-%{version}.tar.gz
+URL: https://github.com/bmr-cymru/boom
+# My repo for package review only:
+Source0: https://github.com/csonto/boom/archive/%{version}/%{name}-%{version}.tar.gz
+# Upstream:
+#Source0: https://github.com/bmr-cymru/boom/archive/%{version}/%{name}-%{version}.tar.gz
 
 BuildArch: noarch
-
+%if 0%{?with_python2}
 BuildRequires: python2-devel
-%if 0%{!?with_python3:1}
-BuildRequires: python-setuptools
-%endif
-
-%if 0%{?with_python3}
 BuildRequires: python2-setuptools
-#BuildRequires: python2-sphinx
+%endif
+%if 0%{?with_python3}
 BuildRequires: python3-devel
-BuildRequires: python3-sphinx
 BuildRequires: python3-setuptools
-%endif # if with_python3
+%endif
 
 %description
 Boom is a boot manager for Linux systems using boot loaders that support
@@ -40,11 +42,16 @@ Boom requires a BLS compatible boot loader to function: either the
 systemd-boot project, or Grub2 with the bls patch (Red Hat Grub2 builds
 include this support in both Red Hat Enterprise Linux 7 and Fedora).
 
-%package -n %{?py2_pkgname}
+%if 0%{?with_python2}
+%package -n python2-boom
 Summary: %{summary}
 %{?python_provide:%python_provide python2-boom}
+%if 0%{?boolean_dependencies}
+Requires: (boom-grub2 if grub2)
+Recommends: (lvm2 or btrfs-progs)
+%endif
 
-%description -n %{?py2_pkgname}
+%description -n python2-boom
 Boom is a boot manager for Linux systems using boot loaders that support
 the BootLoader Specification for boot entry configuration.
 
@@ -53,12 +60,16 @@ systemd-boot project, or Grub2 with the bls patch (Red Hat Grub2 builds
 include this support in both Red Hat Enterprise Linux 7 and Fedora).
 
 This package provides the python2 version of boom.
-
+%endif # with_python2
 
 %if 0%{?with_python3}
 %package -n python3-boom
 Summary: %{summary}
 %{?python_provide:%python_provide python3-boom}
+%if 0%{?boolean_dependencies}
+Requires: (boom-grub2 if grub2)
+Recommends: (lvm2 or btrfs-progs)
+%endif
 
 %description -n python3-boom
 Boom is a boot manager for Linux systems using boot loaders that support
@@ -69,28 +80,42 @@ systemd-boot project, or Grub2 with the bls patch (Red Hat Grub2 builds
 include this support in both Red Hat Enterprise Linux 7 and Fedora).
 
 This package provides the python3 version of boom.
+%endif # with_python3
 
+%if 0%{?with_grub2}
+%package -n boom-grub2
+Summary: %{summary}
+Requires: grub2
 
-%endif # if with_python3
+%description -n boom-grub2
+Boom is a boot manager for Linux systems using boot loaders that support
+the BootLoader Specification for boot entry configuration.
+
+Boom requires a BLS compatible boot loader to function: either the
+systemd-boot project, or Grub2 with the bls patch (Red Hat Grub2 builds
+include this support in both Red Hat Enterprise Linux 7 and Fedora).
+
+This package provides integration scripts for grub2 bootloader.
+%endif # with_grub2
+
 %prep
 %autosetup -n boom-%{version}
 
 %build
+%if 0%{?with_python2}
 %py2_build
-
+%endif
 %if 0%{?with_python3}
 %py3_build
-%endif # if with_python3
+%endif
 
 %install
-# Install Python3 first, so that the py2 build of usr/bin/boom is not
-# overwritten by the py3 version of the script.
+%if 0%{?with_python2}
+%py2_install
+%endif
 %if 0%{?with_python3}
 %py3_install
-make -C doc html BUILDDIR=../doc
-%endif # if with_python3
-
-%py2_install
+%endif
 
 # Install Grub2 integration scripts
 mkdir -p ${RPM_BUILD_ROOT}/etc/grub.d
@@ -108,42 +133,49 @@ mkdir -p ${RPM_BUILD_ROOT}/%{_mandir}/man8
 install -m 644 man/man8/boom.8 ${RPM_BUILD_ROOT}/%{_mandir}/man8
 
 %check
+%if 0%{?with_python2}
 %{__python2} setup.py test
-
+%endif
 %if 0%{?with_python3}
 %{__python3} setup.py test
-%endif # if with_python3
+%endif
 
-%files -n %{?py2_pkgname}
+%if 0%{?with_python2}
+%files -n python2-boom
 %license COPYING
 %doc README.md
-%doc %{_mandir}/man8/boom.*
-%if 0%{?sphinx_docs}
-%doc doc/html/
-%endif # if sphinx_docs
-%doc examples/*
-%{python2_sitelib}/*
+%if !0%{?with_python3}
 %{_bindir}/boom
-/etc/grub.d/42_boom
-%config(noreplace) /etc/default/boom
+%doc %{_mandir}/man8/boom.*
+%endif
+%{python2_sitelib}/*
+%doc examples/*
 /boot/*
+%endif # with_python2
 
 %if 0%{?with_python3}
 %files -n python3-boom
 %license COPYING
 %doc README.md
-%doc %{_mandir}/man8/boom.*
-%if 0%{?sphinx_docs}
-%doc doc/html/
-%endif # if sphinx_docs
-%doc examples/*
 %{python3_sitelib}/*
-/etc/grub.d/42_boom
-/etc/default/boom
+%{_bindir}/boom
+%doc %{_mandir}/man8/boom.*
+%doc examples/*
 /boot/*
-%endif # if with_python3
+%endif # with_python3
+
+%if 0%{?with_grub2}
+%files -n boom-grub2
+/etc/default/boom
+/etc/grub.d/42_boom
+%endif # with_grub2
 
 %changelog
+* Tue Feb 06 2018 Marian Csontos <mcsontos@redhat.com> = 0.8.2.fedora.1-1
+- New upstream bugfix release
+- boom script uses python3 by default
+- Split grub2 support into subpackage
+
 * Tue Oct 31 2017 Bryn M. Reeves <bmr@redhat.com> = 0.8-1
 - Merge spec file changes from mcsontos
 - Add boom.8 manual page
