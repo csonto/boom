@@ -118,18 +118,17 @@ This package provides integration scripts for grub2 bootloader.
 %endif
 
 # Install Grub2 integration scripts
-mkdir -p ${RPM_BUILD_ROOT}/etc/grub.d
-mkdir -p ${RPM_BUILD_ROOT}/etc/default
+install -d -m 700 ${RPM_BUILD_ROOT}/etc/grub.d
+install -d -m 755 ${RPM_BUILD_ROOT}/etc/default
 install -m 755 etc/grub.d/42_boom ${RPM_BUILD_ROOT}/etc/grub.d
 install -m 644 etc/default/boom ${RPM_BUILD_ROOT}/etc/default
 
 # Make configuration directories
-mkdir -p ${RPM_BUILD_ROOT}/boot/boom/profiles
-mkdir -p ${RPM_BUILD_ROOT}/boot/loader/entries
-install -d -m 750 ${RPM_BUILD_ROOT}/boot/boom/profiles ${RPM_BUILD_ROOT}
-install -d -m 750 ${RPM_BUILD_ROOT}/boot/loader/entries ${RPM_BUILD_ROOT}
+install -d -m 700 ${RPM_BUILD_ROOT}/boot/boom/profiles
+install -d -m 700 ${RPM_BUILD_ROOT}/boot/loader/entries
+install -m 644 examples/profiles/*.profile ${RPM_BUILD_ROOT}/boot/boom/profiles
 
-mkdir -p ${RPM_BUILD_ROOT}/%{_mandir}/man8
+install -d -m 755 ${RPM_BUILD_ROOT}/%{_mandir}/man8
 install -m 644 man/man8/boom.8 ${RPM_BUILD_ROOT}/%{_mandir}/man8
 
 %check
@@ -149,7 +148,8 @@ install -m 644 man/man8/boom.8 ${RPM_BUILD_ROOT}/%{_mandir}/man8
 %doc %{_mandir}/man8/boom.*
 %endif
 %{python2_sitelib}/*
-%doc examples/*
+%doc examples/
+%doc tests/
 /boot/*
 %endif # with_python2
 
@@ -160,7 +160,8 @@ install -m 644 man/man8/boom.8 ${RPM_BUILD_ROOT}/%{_mandir}/man8
 %{python3_sitelib}/*
 %{_bindir}/boom
 %doc %{_mandir}/man8/boom.*
-%doc examples/*
+%doc examples/
+%doc tests/
 /boot/*
 %endif # with_python3
 
