@@ -13,7 +13,7 @@
 # - another name for top level package (boom-boot suggested)
 # - add Conflict:
 Name: boom
-Version: 0.8.2.fedora.1
+Version: 0.8.4.fedora.1
 Release: 1%{?dist}
 Summary: %{summary}
 
@@ -172,6 +172,10 @@ install -m 644 man/man8/boom.8 ${RPM_BUILD_ROOT}/%{_mandir}/man8
 %endif # with_grub2
 
 %changelog
+* Tue Feb 06 2018 Marian Csontos <mcsontos@redhat.com> = 0.8.4.fedora.1-1
+- New upstream bugfix release
+- Fix rpmlint errors
+
 * Tue Feb 06 2018 Marian Csontos <mcsontos@redhat.com> = 0.8.2.fedora.1-1
 - New upstream bugfix release
 - boom script uses python3 by default
